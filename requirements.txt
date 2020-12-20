@@ -1,0 +1,8 @@
+ezodf
+lxml
+pandas
+numpy==1.15.4
+pyinstaller
+pypiwin32
+dash
+pylint
