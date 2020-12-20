@@ -6,13 +6,13 @@ from app_code import rpg_data as rd, parse_life_paths as lp
 
 LOGGER = logging.getLogger('gui')
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-dash_app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 skill_options = [{'label': 'None', 'value': 'None'}]
 for skill in sorted(rd.CHAR_DATA.skill_dict):
     skill_options.append({'label': skill, 'value': skill})
 
-dash_app.layout = html.Div([
+app.layout = html.Div([
     html.H1("Search for the following skills in the same lifepath."),
     dcc.Dropdown(id='skill_1', options=skill_options),
     dcc.Dropdown(id='skill_2', options=skill_options),
@@ -25,7 +25,7 @@ dash_app.layout = html.Div([
 ])
 
 
-@dash_app.callback(
+@app.callback(
     dash.dependencies.Output('results', 'children'),
     [
         dash.dependencies.Input('submit', 'n_clicks'),
@@ -107,4 +107,4 @@ def search_lifepaths(submit_n_clicks, skill_1, skill_2, skill_3, skill_4):
 
 
 if __name__ == '__main__':
-    dash_app.run_server(debug=True)
+    app.run_server(debug=True)
