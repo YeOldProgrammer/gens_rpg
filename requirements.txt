@@ -2,6 +2,6 @@ ezodf
 lxml
 pandas
 numpy==1.16.0
-pyinstaller
+# pyinstaller
 dash
-pylint
+# pylint
