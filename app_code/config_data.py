@@ -4,6 +4,9 @@ import logging.config
 DATA_DIR = 'data'
 LOG_DIR = 'logs'
 
+if os.path.exists(LOG_DIR) is False:
+    os.mkdir(LOG_DIR)
+
 LOGGING_CONFIG = {
     'version': 1,
     'disable_existing_loggers': True,
