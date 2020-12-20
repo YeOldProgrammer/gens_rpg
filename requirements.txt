@@ -1,7 +1,7 @@
 ezodf
 lxml
 pandas
-numpy==1.15.4
+numpy==1.16.0
 pyinstaller
 dash
 pylint
