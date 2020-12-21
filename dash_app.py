@@ -75,14 +75,16 @@ def search_lifepaths(submit_n_clicks, skill_1, skill_2, skill_3, skill_4):
             html.Tr([
                 html.Th('Group'),
                 html.Th('Path'),
+                html.Th('Row'),
                 html.Th('Requirements'),
             ])
         ]
 
-        for lifepath in match_dict:
+        for lifepath in sorted(match_dict):
             lifepath_tokens = lifepath.split(':')
             group = lifepath_tokens[0].strip()
             path = ':'.join(lifepath_tokens[1:]).strip()
+            row = rd.LIFEPATH_DATA.lifepath_dict[lifepath][lp.SHEET_ROW]
             requirement_list = []
             for requirement_token in rd.LIFEPATH_DATA.lifepath_dict[lifepath][lp.REQUIREMENTS]:
                 requirement_list.append(html.Div(requirement_token))
@@ -94,6 +96,7 @@ def search_lifepaths(submit_n_clicks, skill_1, skill_2, skill_3, skill_4):
                     [
                         html.Td(group, style=cell_style),
                         html.Td(path, style=cell_style),
+                        html.Td(row, style=cell_style),
                         html.Td(html.Div(requirement_list), style=cell_style)
                     ]
                 )

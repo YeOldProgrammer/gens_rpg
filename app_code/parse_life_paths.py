@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import json
+import copy
 import logging
 import pandas as pd
 import ezodf
@@ -81,7 +82,7 @@ class GensCareers:
                 buffer[SHEET_NAME] = sheet_name
                 buffer[SHEET_ROW] = idx + 1
                 profession_tokens = sheet[idx, 0].value.split('(')
-                buffer[PROFESSION_NAME] = profession_tokens[0].strip()
+                buffer[PROFESSION_NAME] = profession_tokens[0].strip().capitalize()
                 buffer[PROFESSION_LATIN] = profession_tokens[1].split(')')[0].strip()
                 buffer[PROFESSION_FULL] = buffer[SHEET_NAME] + ': ' + buffer[PROFESSION_NAME]
                 buffer[REQUIREMENT_GENDER] = sheet[idx, 2].value.strip()
@@ -125,7 +126,7 @@ class GensCareers:
                          buffer[PROFESSION_FULL], buffer[SHEET_NAME],
                          self.lifepath_dict[buffer[PROFESSION_FULL]][SHEET_NAME])
 
-        self.lifepath_dict[buffer[PROFESSION_FULL]] = buffer
+        self.lifepath_dict[buffer[PROFESSION_FULL]] = copy.deepcopy(buffer)
 
         for skill_group in SKILL_GROUPS:
             if skill_group not in buffer:
