@@ -14,11 +14,8 @@ for skill in sorted(rd.CHAR_DATA.skill_dict):
 
 app.layout = html.Div([
     html.H1("Search for the following skills in the same lifepath."),
-    dcc.Dropdown(id='skill_1', options=skill_options),
-    dcc.Dropdown(id='skill_2', options=skill_options),
-    dcc.Dropdown(id='skill_3', options=skill_options),
-    dcc.Dropdown(id='skill_4', options=skill_options),
-    html.Button("Submit", id='submit', n_clicks=0),
+    html.Button("Submit", id='submit', n_clicks=0, style=dict(display="inline-block")),
+    dcc.Dropdown(id='skills', options=skill_options, multi=True, style=dict(width="50%", display="inline-block", verticalAlign='middle')),
     html.Br(),
     html.Br(),
     html.Div(id='results')
@@ -28,41 +25,26 @@ app.layout = html.Div([
 @app.callback(
     dash.dependencies.Output('results', 'children'),
     [
-        dash.dependencies.Input('submit', 'n_clicks'),
-    ],
-    [
-        dash.dependencies.State('skill_1', 'value'),
-        dash.dependencies.State('skill_2', 'value'),
-        dash.dependencies.State('skill_3', 'value'),
-        dash.dependencies.State('skill_4', 'value'),
+        dash.dependencies.Input('skills', 'value'),
     ]
 )
-def search_lifepaths(submit_n_clicks, skill_1, skill_2, skill_3, skill_4):
-    if submit_n_clicks == 0:
-        return []
-
+def search_lifepaths(skill_list):
     output = []
-    skill_list = []
+    if skill_list is not None:
+        skill_count = len(skill_list)
+    else:
+        skill_count = 0
 
-    if skill_1 is not None and skill_1 != 'None':
-        skill_list.append(skill_1)
-    if skill_2 is not None and skill_2 != 'None':
-        skill_list.append(skill_2)
-    if skill_3 is not None and skill_3 != 'None':
-        skill_list.append(skill_3)
-    if skill_4 is not None and skill_4 != 'None':
-        skill_list.append(skill_4)
-
-    skill_count = len(skill_list)
-
-    if skill_count == 0:
-        LOGGER.info("Request to search life paths.  No skills selected")
-        return html.Div(html.B("No skills selected"))
-
-    match_df = rd.LIFEPATH_DATA.skill_df[rd.LIFEPATH_DATA.skill_df[lp.SKILL].isin(skill_list)].set_index(
-        [lp.PROFESSION_FULL, lp.SKILL]).count(level=lp.PROFESSION_FULL)
-    match_dict = match_df[match_df[lp.REQUIREMENTS] >= skill_count].to_dict(orient="index")
-    match_count = len(match_dict)
+    if skill_count > 0:
+        match_df = rd.LIFEPATH_DATA.skill_df[rd.LIFEPATH_DATA.skill_df[lp.SKILL].isin(skill_list)].set_index(
+            [lp.PROFESSION_FULL, lp.SKILL]).count(level=lp.PROFESSION_FULL)
+        match_dict = match_df[match_df[lp.REQUIREMENTS] >= skill_count].to_dict(orient="index")
+        match_count = len(match_dict)
+    else:
+        match_dict = {}
+        for key in rd.LIFEPATH_DATA.lifepath_dict.keys():
+            match_dict[key] = {'requirements': 0}
+        match_count = len(match_dict)
 
     LOGGER.info("Request to search life paths.  skill_count=%d skills=%s match_count=%d",
                 skill_count, skill_list, match_count)
@@ -76,6 +58,7 @@ def search_lifepaths(submit_n_clicks, skill_1, skill_2, skill_3, skill_4):
                 html.Th('Group'),
                 html.Th('Path'),
                 html.Th('Row'),
+                html.Th('Skills'),
                 html.Th('Requirements'),
             ])
         ]
@@ -86,10 +69,22 @@ def search_lifepaths(submit_n_clicks, skill_1, skill_2, skill_3, skill_4):
             path = ':'.join(lifepath_tokens[1:]).strip()
             row = rd.LIFEPATH_DATA.lifepath_dict[lifepath][lp.SHEET_ROW]
             requirement_list = []
+            skills_list = []
             for requirement_token in rd.LIFEPATH_DATA.lifepath_dict[lifepath][lp.REQUIREMENTS]:
                 requirement_list.append(html.Div(requirement_token))
             if len(rd.LIFEPATH_DATA.lifepath_dict[lifepath][lp.REQUIREMENTS]) == 0:
                 requirement_list.append(html.Div('None'))
+            for skill_group in lp.SKILL_GROUPS:
+                if skill_group not in rd.LIFEPATH_DATA.lifepath_dict[lifepath]:
+                    continue
+                for this_skill in rd.LIFEPATH_DATA.lifepath_dict[lifepath][skill_group]:
+                    if this_skill in skills_list:
+                        continue
+                    skills_list.append(this_skill)
+
+            skill_div_list = []
+            for this_skill in sorted(skills_list):
+                skill_div_list.append(html.Div(this_skill))
 
             row_data.append(
                 html.Tr(
@@ -97,6 +92,7 @@ def search_lifepaths(submit_n_clicks, skill_1, skill_2, skill_3, skill_4):
                         html.Td(group, style=cell_style),
                         html.Td(path, style=cell_style),
                         html.Td(row, style=cell_style),
+                        html.Td(html.Div(skill_div_list), style=cell_style),
                         html.Td(html.Div(requirement_list), style=cell_style)
                     ]
                 )

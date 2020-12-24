@@ -50,6 +50,7 @@ class GensCareers:
         self.cs_skill_dict = cs_skill_dict
         self.skill_list = []
         self.lifepath_dict = {}
+        self.missing_skills = {}
         self.parse_spread_sheet()
         self.skill_df = pd.DataFrame.from_dict(self.skill_list)
 
@@ -61,6 +62,7 @@ class GensCareers:
         spreadsheet = ezodf.opendoc(self.spread_sheet_name)
         for sheet in spreadsheet.sheets:
             self.process_sheet(sheet)
+
 
     def process_sheet(self, sheet):
         sheet_name = sheet.name
@@ -147,6 +149,15 @@ class GensCareers:
                     SKILL: skill,
                     REQUIREMENTS: buffer[REQUIREMENTS]
                 })
+
+                if skill in self.cs_skill_dict:
+                    self.cs_skill_dict[skill]['count'] = self.cs_skill_dict[skill].get('count', 0) + 1
+                elif skill not in self.missing_skills:
+                    self.missing_skills[skill] = {'count': 1, 'professions': []}
+                else:
+                    if buffer[PROFESSION_FULL] not in self.missing_skills[skill]['professions']:
+                        self.missing_skills[skill]['count'] += 1
+                        self.missing_skills[skill]['professions'].append(buffer[PROFESSION_FULL])
 
         self.clear_buffer(buffer)
 
