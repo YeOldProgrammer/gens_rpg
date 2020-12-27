@@ -21,13 +21,12 @@ REQUIREMENT_GENDER = 'gender'
 GENERAL_SKILLS = 'general_skills'
 
 SKILL = 'skill'
-SKILLS_AGE_7_10 = 'skills age 7-10'
-SKILLS_AGE_11_14 = 'skills age 11-14'
-SKILLS = 'skills'
-REQUIREMENTS = 'requirements'
-TRAITS = 'traits'
-NOTES = 'notes'
-NOTE = 'note'
+SKILLS_AGE_7_10 = 'Skills Age 7-10'
+SKILLS_AGE_11_14 = 'Skills Age 11-14'
+SKILLS = 'Skills'
+REQUIREMENTS = 'Requirements'
+TRAITS = 'Traits'
+NOTES = 'Notes'
 
 SKILL_GROUPS = [
     SKILLS_AGE_7_10,
@@ -39,7 +38,6 @@ DATA_FIELDS = SKILL_GROUPS + [
     TRAITS,
     REQUIREMENTS,
     NOTES,
-    NOTE,
 ]
 
 
@@ -63,7 +61,6 @@ class GensCareers:
         for sheet in spreadsheet.sheets:
             self.process_sheet(sheet)
 
-
     def process_sheet(self, sheet):
         sheet_name = sheet.name
         rowcount = sheet.nrows()
@@ -74,7 +71,7 @@ class GensCareers:
         buffer = {}
         self.clear_buffer(buffer)
         while idx < rowcount:
-            row_name = sheet[idx, 0].value.lower()
+            row_name = sheet[idx, 0].value.title()
             if row_name not in DATA_FIELDS:
                 if first is True:
                     first = False
@@ -84,13 +81,32 @@ class GensCareers:
                 buffer[SHEET_NAME] = sheet_name
                 buffer[SHEET_ROW] = idx + 1
                 profession_tokens = sheet[idx, 0].value.split('(')
-                buffer[PROFESSION_NAME] = profession_tokens[0].strip().capitalize()
-                buffer[PROFESSION_LATIN] = profession_tokens[1].split(')')[0].strip()
-                buffer[PROFESSION_FULL] = buffer[SHEET_NAME] + ': ' + buffer[PROFESSION_NAME]
-                buffer[REQUIREMENT_GENDER] = sheet[idx, 2].value.strip()
+                profession_tokens_len = len(profession_tokens)
 
-                year_list = re.findall(r'(\d+) years', sheet[idx, 3].value.strip().lower())
-                general_skill_list = re.findall(r'(\d+) general skills', sheet[idx, 4].value.strip().lower())
+                try:
+                    buffer[PROFESSION_NAME] = profession_tokens[0].strip().title ()
+                    if len(profession_tokens) > 1:
+                        buffer[PROFESSION_LATIN] = profession_tokens[1].split(')')[0].strip()
+                    buffer[PROFESSION_FULL] = buffer[SHEET_NAME] + ': ' + buffer[PROFESSION_NAME]
+                except Exception as error_text:
+                    LOGGER.error("Failed to process Sheet %s row=%d token_count=%d line=%s - %s",
+                                 sheet_name, rowcount, profession_tokens_len, profession_tokens, error_text,
+                                 exc_info=True)
+
+                if sheet[idx, 2].value is None:
+                    buffer[REQUIREMENT_GENDER] = None
+                else:
+                    buffer[REQUIREMENT_GENDER] = sheet[idx, 2].value.strip()
+
+                if sheet[idx, 3].value is None:
+                    year_list = []
+                else:
+                    year_list = re.findall(r'(\d+) years', sheet[idx, 3].value.strip().lower())
+
+                if sheet[idx, 4].value is None:
+                    general_skill_list = []
+                else:
+                    general_skill_list = re.findall(r'(\d+) general skills', sheet[idx, 4].value.strip().lower())
 
                 if len(year_list) > 0:
                     buffer[PROFESSION_DURATION] = int(year_list[0])
@@ -135,7 +151,7 @@ class GensCareers:
                 continue
 
             for skill in buffer[skill_group]:
-                skill = skill.capitalize()
+                skill = skill.title()
                 if skill not in self.skill_dict:
                     self.skill_dict[skill] = []
 
@@ -147,7 +163,8 @@ class GensCareers:
                 self.skill_list.append({
                     PROFESSION_FULL: buffer[PROFESSION_FULL],
                     SKILL: skill,
-                    REQUIREMENTS: buffer[REQUIREMENTS]
+                    REQUIREMENTS: buffer[REQUIREMENTS],
+                    SHEET_NAME: buffer[SHEET_NAME]
                 })
 
                 if skill in self.cs_skill_dict:

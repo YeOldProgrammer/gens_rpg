@@ -37,7 +37,8 @@ class GensCharacterSheet:
                 skill_name = sheet[row_idx, col_idx].value
                 if skill_name is None:
                     continue
-                skill_name = skill_name.strip()
+
+                skill_name = skill_name.title().strip()
                 potential = skill_name[-1].upper()
                 skill_name = skill_name[:-1].strip()
 
@@ -49,17 +50,3 @@ class GensCharacterSheet:
                     'row': row_idx,
                     'col': col_idx,
                 }
-
-
-def run():
-    data_obj = GensCharacterSheet()
-    list_skills(data_obj)
-
-
-def list_skills(data_obj):
-    for skill in sorted(data_obj.skill_dict):
-        print("%s - pot:%s " % (skill, data_obj.skill_dict[skill]['potential']))
-
-
-if __name__ == "__main__":
-    run()

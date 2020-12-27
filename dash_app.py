@@ -15,7 +15,10 @@ for skill in sorted(rd.CHAR_DATA.skill_dict):
 app.layout = html.Div([
     html.H1("Search for the following skills in the same lifepath."),
     html.Button("Submit", id='submit', n_clicks=0, style=dict(display="inline-block")),
-    dcc.Dropdown(id='skills', options=skill_options, multi=True, style=dict(width="50%", display="inline-block", verticalAlign='middle')),
+    dcc.Dropdown(id='skills', options=skill_options, multi=True,
+                 style=dict(width="50%", display="inline-block", verticalAlign='middle')),
+    dcc.Checklist(id='options', options=[{'label': 'Childhood', 'value': 'childhood'}], value=['childhood'],
+                  style=dict(width="50%", display="inline-block", verticalAlign='middle')),
     html.Br(),
     html.Br(),
     html.Div(id='results')
@@ -26,9 +29,10 @@ app.layout = html.Div([
     dash.dependencies.Output('results', 'children'),
     [
         dash.dependencies.Input('skills', 'value'),
+        dash.dependencies.Input('options', 'value'),
     ]
 )
-def search_lifepaths(skill_list):
+def search_lifepaths(skill_list, options):
     output = []
     if skill_list is not None:
         skill_count = len(skill_list)
@@ -36,13 +40,24 @@ def search_lifepaths(skill_list):
         skill_count = 0
 
     if skill_count > 0:
-        match_df = rd.LIFEPATH_DATA.skill_df[rd.LIFEPATH_DATA.skill_df[lp.SKILL].isin(skill_list)].set_index(
-            [lp.PROFESSION_FULL, lp.SKILL]).count(level=lp.PROFESSION_FULL)
+        if 'childhood' in options:
+            base_df = rd.LIFEPATH_DATA.skill_df[rd.LIFEPATH_DATA.skill_df[lp.SHEET_NAME] == 'Childhood']
+        else:
+            base_df = rd.LIFEPATH_DATA.skill_df[rd.LIFEPATH_DATA.skill_df[lp.SHEET_NAME] != 'Childhood']
+
+        match_df = base_df[
+            base_df[lp.SKILL].isin(skill_list)
+        ].set_index([lp.PROFESSION_FULL, lp.SKILL]).count(level=lp.PROFESSION_FULL)
         match_dict = match_df[match_df[lp.REQUIREMENTS] >= skill_count].to_dict(orient="index")
         match_count = len(match_dict)
     else:
         match_dict = {}
         for key in rd.LIFEPATH_DATA.lifepath_dict.keys():
+            if 'childhood' in options and rd.LIFEPATH_DATA.lifepath_dict[key][lp.SHEET_NAME] != 'Childhood':
+                continue
+            elif 'childhood' not in options and rd.LIFEPATH_DATA.lifepath_dict[key][lp.SHEET_NAME] == 'Childhood':
+                continue
+
             match_dict[key] = {'requirements': 0}
         match_count = len(match_dict)
 
@@ -59,6 +74,7 @@ def search_lifepaths(skill_list):
                 html.Th('Path'),
                 html.Th('Row'),
                 html.Th('Skills'),
+                html.Th('Traits'),
                 html.Th('Requirements'),
             ])
         ]
@@ -70,10 +86,12 @@ def search_lifepaths(skill_list):
             row = rd.LIFEPATH_DATA.lifepath_dict[lifepath][lp.SHEET_ROW]
             requirement_list = []
             skills_list = []
+            trait_list = []
             for requirement_token in rd.LIFEPATH_DATA.lifepath_dict[lifepath][lp.REQUIREMENTS]:
                 requirement_list.append(html.Div(requirement_token))
             if len(rd.LIFEPATH_DATA.lifepath_dict[lifepath][lp.REQUIREMENTS]) == 0:
                 requirement_list.append(html.Div('None'))
+
             for skill_group in lp.SKILL_GROUPS:
                 if skill_group not in rd.LIFEPATH_DATA.lifepath_dict[lifepath]:
                     continue
@@ -82,9 +100,16 @@ def search_lifepaths(skill_list):
                         continue
                     skills_list.append(this_skill)
 
+            for trait in rd.LIFEPATH_DATA.lifepath_dict[lifepath][lp.TRAITS]:
+                trait_list.append(trait)
+
             skill_div_list = []
+            trait_div_list = []
             for this_skill in sorted(skills_list):
                 skill_div_list.append(html.Div(this_skill))
+
+            for this_trait in sorted(trait_list):
+                trait_div_list.append(html.Div(this_trait))
 
             row_data.append(
                 html.Tr(
@@ -93,6 +118,7 @@ def search_lifepaths(skill_list):
                         html.Td(path, style=cell_style),
                         html.Td(row, style=cell_style),
                         html.Td(html.Div(skill_div_list), style=cell_style),
+                        html.Td(html.Div(trait_div_list), style=cell_style),
                         html.Td(html.Div(requirement_list), style=cell_style)
                     ]
                 )

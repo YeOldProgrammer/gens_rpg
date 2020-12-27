@@ -12,7 +12,7 @@ LOGGING_CONFIG = {
     'disable_existing_loggers': True,
     'formatters': {
         'default': {
-            'format': '%(asctime)s [%(levelname)-6s %(module)-21s:%(lineno)-3s] %(message)s'
+            'format': '%(asctime)s %(levelname)-6s [%(module)-21s:%(lineno)-3s] %(message)s'
         },
     },
     'handlers': {
