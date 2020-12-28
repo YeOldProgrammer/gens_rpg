@@ -38,6 +38,9 @@ class GensCharacterSheet:
                 if skill_name is None:
                     continue
 
+                if 'child-rearing' in skill_name.lower():
+                    a=1
+
                 skill_name = skill_name.title().strip()
                 potential = skill_name[-1].upper()
                 skill_name = skill_name[:-1].strip()

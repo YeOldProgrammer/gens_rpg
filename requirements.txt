@@ -4,4 +4,5 @@ pandas
 numpy==1.16.0
 # pyinstaller
 dash
+dash-bootstrap-components
 # pylint

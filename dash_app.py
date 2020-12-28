@@ -1,6 +1,7 @@
 import logging
 import dash
 import dash_core_components as dcc
+import dash_bootstrap_components as dbc
 import dash_html_components as html
 from app_code import rpg_data as rd, parse_life_paths as lp
 
@@ -12,13 +13,24 @@ skill_options = [{'label': 'None', 'value': 'None'}]
 for skill in sorted(rd.CHAR_DATA.skill_dict):
     skill_options.append({'label': skill, 'value': skill})
 
+character_start_div = html.Div([
+    dbc.Modal([
+
+    ])
+])
+
+
 app.layout = html.Div([
     html.H1("Search for the following skills in the same lifepath."),
-    html.Button("Submit", id='submit', n_clicks=0, style=dict(display="inline-block")),
-    dcc.Dropdown(id='skills', options=skill_options, multi=True,
-                 style=dict(width="50%", display="inline-block", verticalAlign='middle')),
-    dcc.Checklist(id='options', options=[{'label': 'Childhood', 'value': 'childhood'}], value=['childhood'],
-                  style=dict(width="50%", display="inline-block", verticalAlign='middle')),
+    # html.Button("Submit", id='submit', n_clicks=0, style=dict(display="inline-block")),
+    html.Div(children=[
+        html.Label("Lifepath skill filter:  ",
+                   style=dict(verticalAlign='middle', display='inline-block', fontWeight='bold')),
+        dcc.Checklist(id='options', options=[{'label': 'Childhood', 'value': 'childhood'}], value=['childhood'],
+                      style=dict(verticalAlign='middle', display='inline-block', marginLeft="10px")),
+        dcc.Dropdown(id='skills', options=skill_options, multi=True,
+                     style=dict(display='inline-block', width="70%", verticalAlign="middle", marginLeft="10px")),
+    ], style=dict(float='left', width="100%", display="inline-block")),
     html.Br(),
     html.Br(),
     html.Div(id='results')
@@ -30,7 +42,8 @@ app.layout = html.Div([
     [
         dash.dependencies.Input('skills', 'value'),
         dash.dependencies.Input('options', 'value'),
-    ]
+    ],
+
 )
 def search_lifepaths(skill_list, options):
     output = []
@@ -106,7 +119,12 @@ def search_lifepaths(skill_list, options):
             skill_div_list = []
             trait_div_list = []
             for this_skill in sorted(skills_list):
-                skill_div_list.append(html.Div(this_skill))
+                display_skill = this_skill.title()
+                if display_skill in rd.CHAR_DATA.skill_dict:
+                    display_skill = display_skill + ' ' + rd.CHAR_DATA.skill_dict[display_skill]['potential']
+                else:
+                    LOGGER.warning("SKILL NO POTENTIAL (%s)", this_skill)
+                skill_div_list.append(html.Div(display_skill))
 
             for this_trait in sorted(trait_list):
                 trait_div_list.append(html.Div(this_trait))
